@@ -1,0 +1,173 @@
+---
+title: 'Week 13 Lecture: Applied Machine Learning'
+author: "L. Jason Anastasopoulos [ljanastas@princeton.edu](ljanastas@princeton.edu)"
+date: "April 2, 2018"
+output: beamer_presentation
+---
+
+## Dimensionality Reduction Methods
+
+- All of the models discussed used the original predictors in some form.
+
+- Dimensionality reduction methods transform the predictors into variable clusters and then use these transformed variables to fit a model.
+
+
+## Dimensionality Reduction Methods
+Consider a linear combination  $Z_{1},\cdots,Z_{M}$ of the features $X_{1},\cdots,X_{1}$  such that $M < p$ where:
+$$
+Z_{m} = \sum_{j = 1}^{p}\phi_{jm}X_{j} 
+$$
+For some  constants $\phi_{1},\cdots,\phi_{M}; m\in[1,M]$. We can then fit the linear regression model:
+
+$$
+y_{i} = \Theta_{0} + \sum_{m=1}^{M}\Theta_{m}z_{im}
+$$
+
+## Dimensionality Reduction Methods
+The model
+$$
+y_{i} = \Theta_{0} + \sum_{m=1}^{M}\Theta_{m}z_{im}
+$$
+now has $M+1<p+1$ predictors and, if chosen well, can result in a better fit through estimating fewer parameters than the original regression model. 
+
+
+## Dimensionality Reduction Methods
+To be clear take a simple linear regression model with three features:
+
+$$
+Y = \theta_{0} + \theta_{1}X_{1} + \theta_{2}X_{2} + \theta_{3}X_{3} + \epsilon
+$$
+Define $z_{1} = \phi_{1}X_{1} +  \phi_{3}X_{3}$ and $z_{2} = \phi_{2}X_{2}$. We can now estimate the reduced model:
+
+$$
+\begin{aligned}
+Y & = \Theta_{0} + \Theta_{1}z_{1} + \Theta_{2}z_{2} + \epsilon \\
+  & = \Theta_{0} + \Theta_{1}(\phi_{1}X_{1} +  \phi_{3}X_{3}) + \Theta_{2}(\phi_{2}X_{2}) + \epsilon
+\end{aligned}
+$$
+
+## Dimensionality Reduction Methods
+
+- Again the key here is that we are estimating a model with fewer predictors, thus reducing the *dimensionality* of the model.
+
+- This is especially useful in problems where *p* is large relative to *n*. Variance will be significantly reduced in this case and this is not uncommon in machine learning problems (ie text analysis)
+
+## All dimensionality reduction methods involves two steps
+
+>1. Transformed predictors $Z_{1}, \cdots, Z_{M}$ are first obtained.
+
+>2. A model is fit using the *M* predictors.
+
+>- There are several methods for accomplishing this but we will focus on principal components analysis.
+
+## Principal Components Analysis (PCA)
+
+$$
+\begin{aligned}
+f: \mathcal{X}  & \rightarrow \mathcal{F} \\ 
+\\
+\mathcal{X} \in \mathbb{R}^{n x p} &, \mathcal{F} \in \mathbb{R}^{nxm}; p<<m
+\end{aligned}
+$$
+
+
+- PCA is often discussed in the context of *unsupervised learning* and we'll discuss it in that context later on in the semester.
+
+- It's a popular means of transforming a high dimensional feature space $\mathcal{X}$ into a very low-dimensional space $\mathcal{F}$
+
+
+## Principal Components Analysis (PCA)
+
+- **First principal component** is the dimension along which the data vary the most and would be the most useful for a regression approach.
+
+\footnotesize
+```{r}
+# Predicting political party with votes
+library(mlbench)
+data(HouseVotes84)
+head(HouseVotes84)
+```
+
+## Predicting political party from votes, 1984
+
+\footnotesize
+```{r, echo=FALSE}
+Party<-as.numeric(HouseVotes84$Class)
+Votes<-data.frame(HouseVotes84[,2:dim(HouseVotes84)[2]])
+Votes<-as.matrix(sapply(Votes, as.numeric))
+Votes[is.na(Votes)]<-2
+party.model1<-lm(Party~., data = data.frame(Votes))
+summary(party.model1)
+```
+
+## Predicting political party from votes, 1984
+
+- Can the votes be explained with a single dimension?
+
+```{r,fig.width=4,fig.height=3.5,echo=FALSE}
+Votes.pca <- prcomp(Votes,
+                 center = TRUE,
+                 scale. = TRUE) 
+plot(Votes.pca, type = "l")
+```
+
+
+
+## Predicting political party from votes, 1984
+
+- Can the votes be explained with a single dimension?
+
+\footnotesize
+```{r}
+summary(Votes.pca)
+```
+
+## Predicting political party from votes, 1984
+
+\centering
+\includegraphics[width= \textwidth]{./figs/pca-plot.png}
+
+
+
+## Predicting political party from votes, 1984
+
+- Took 16 dimensions, reduced to 1 or 2 that still explain about 50\% of the variance.
+
+- Can use these dimensions in regression for comparison. 
+
+- Let's just use dimensions one and two
+
+
+## Predicting political party from votes, 1984
+
+$$
+ Party = \Theta_{0} + \Theta \pi_{1} + \Theta_{2}\pi_{2}
+$$
+
+- Took 16 dimensions, reduced to 1 or 2 that still explain about 50\% of the variance.
+
+- Can use these dimensions in regression for comparison. 
+
+- Let's just use dimensions one and two.
+
+
+## Predicting political party from votes, 1984
+
+$$
+ Party = \Theta_{0} + \Theta \pi_{1} + \Theta_{2}\pi_{2}
+$$
+\footnotesize
+
+```{r}
+pi1<-Votes.pca$x[,1]
+pi2<-Votes.pca$x[,2]
+summary(lm(Party~pi1 + pi2))
+```
+
+## Problems with PCA
+- Very sensitive to scaling
+
+- Is a good idea to standardize the predictors.
+
+
+
